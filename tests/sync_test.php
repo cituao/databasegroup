@@ -1,10 +1,30 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/* 
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+/**
+ * External databasegroup enrolment sync tests, this also tests adodb drivers
+ * that are matching our four supported Moodle database drivers.
+ *
+ * @package    enrol_databasegroup
+ * @category   phpunit
+ * @copyright  2011 Petr Skoda {@link http://skodak.org}
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
+defined('MOODLE_INTERNAL') || die();
 
 class enrol_databasegroup_testcase extends advanced_testcase {
     protected static $courses = array();
@@ -142,6 +162,7 @@ class enrol_databasegroup_testcase extends advanced_testcase {
     
     protected function reset_enrol_database() {
         global $DB;
+        
 
         $DB->delete_records('enrol_dbgroup_test_enrols', array());
         $DB->delete_records('enrol_dbgroup_test_courses', array());
@@ -152,6 +173,20 @@ class enrol_databasegroup_testcase extends advanced_testcase {
             $plugin->delete_instance($instance);
         }
     }
+    
+    
+    protected function assertHasRoleAssignment($userindex, $courseindex, $rolename = null) {
+        global $DB;
+        $dbinstance = $DB->get_record('enrol', array('courseid' => self::$courses[$courseindex]->id, 'enrol' => 'databasegroup'), '*', MUST_EXIST);
+
+        $coursecontext = context_course::instance(self::$courses[$courseindex]->id);
+        if ($rolename === false) {
+            $this->assertFalse($DB->record_exists('role_assignments', array('component' => 'enrol_databasegroup', 'itemid' => $dbinstance->id, 'userid' => self::$users[$userindex]->id, 'contextid' => $coursecontext->id)));
+        } else if ($rolename !== null) {
+            $this->assertTrue($DB->record_exists('role_assignments', array('component' => 'enrol_databasegroup', 'itemid' => $dbinstance->id, 'userid' => self::$users[$userindex]->id, 'contextid' => $coursecontext->id, 'roleid' => self::$roles[$rolename]->id)));
+        }
+    }
+    
     protected function assertIsEnrolled($userindex, $courseindex, $status=null, $rolename = null) {
         global $DB;
         $dbinstance = $DB->get_record('enrol', array('courseid' => self::$courses[$courseindex]->id, 'enrol' => 'databasegroup'), '*', MUST_EXIST);
@@ -165,11 +200,6 @@ class enrol_databasegroup_testcase extends advanced_testcase {
         $this->assertHasRoleAssignment($userindex, $courseindex, $rolename);
     }
     
-    
-    public function test_adding() {
-         $this->assertEquals(3, 1+2);
-     }
-     
      public function test_sync_user_enrolments() {
         global $DB;
 
@@ -180,36 +210,35 @@ class enrol_databasegroup_testcase extends advanced_testcase {
 
         $plugin = enrol_get_plugin('databasegroup');
         
-                // Test basic enrol sync for one user after login.
+        // Test basic enrol sync for one user after login.
 
         $this->reset_enrol_database();
         
-        /*
-        $plugin->set_config('localcoursefield', 'shortname');
-        $plugin->set_config('localuserfield', 'username');
+        
+        $plugin->set_config('localcoursefield', 'idnumber');
+        $plugin->set_config('localuserfield', 'idnumber');
         $plugin->set_config('localrolefield', 'shortname');
 
         $plugin->set_config('defaultrole', self::$roles['student']->id);
 
-        $DB->insert_record('enrol_databasegroup_test_enrols', array('username' => 'userid1', 'course_shortname' => 'courseid1', 'roleid' => 'student'));
-        $DB->insert_record('enrol_databasegroup_test_enrols', array('username' => 'userid1', 'course_shortname' => 'courseid2', 'roleid' => 'teacher'));
-        $DB->insert_record('enrol_databasegroup_test_enrols', array('username' => 'userid2', 'course_shortname' => 'courseid1', 'roleid' => null));
-        $DB->insert_record('enrol_databasegroup_test_enrols', array('username' => 'userid4', 'course_shortname' => 'courseid4', 'roleid' => 'editingteacher', 'otheruser' => '1'));
-        $DB->insert_record('enrol_databasegroup_test_enrols', array('username' => 'xxxxxxx', 'course_shortname' => 'courseid1', 'roleid' => 'student')); // Bogus record to be ignored.
-        $DB->insert_record('enrol_databasegroup_test_enrols', array('username' => 'userid1', 'course_shortname' => 'xxxxxxxxx', 'roleid' => 'student')); // Bogus record to be ignored.
+        $DB->insert_record('enrol_dbgroup_test_enrols', array('username' => 'userid1', 'course_shortname' => 'courseid1', 'roleid' => 'student'));
+        $DB->insert_record('enrol_dbgroup_test_enrols', array('username' => 'userid1', 'course_shortname' => 'courseid2', 'roleid' => 'teacher'));
+        $DB->insert_record('enrol_dbgroup_test_enrols', array('username' => 'userid2', 'course_shortname' => 'courseid1', 'roleid' => null));
+        $DB->insert_record('enrol_dbgroup_test_enrols', array('username' => 'userid4', 'course_shortname' => 'courseid4', 'roleid' => 'editingteacher', 'otheruser' => '1'));
+        $DB->insert_record('enrol_dbgroup_test_enrols', array('username' => 'xxxxxxx', 'course_shortname' => 'courseid1', 'roleid' => 'student')); // Bogus record to be ignored.
+        $DB->insert_record('enrol_dbgroup_test_enrols', array('username' => 'userid1', 'course_shortname' => 'xxxxxxxxx', 'roleid' => 'student')); // Bogus record to be ignored.
 
         $this->assertEquals(0, $DB->count_records('user_enrolments', array()));
         $this->assertEquals(0, $DB->count_records('enrol', array('enrol' => 'databasegroup')));
         $this->assertEquals(0, $DB->count_records('role_assignments', array('component' => 'enrol_databasegroup')));
-
+        
         $plugin->sync_user_enrolments(self::$users[1]);
         $this->assertEquals(2, $DB->count_records('user_enrolments', array()));
         $this->assertEquals(2, $DB->count_records('enrol', array('enrol' => 'databasegroup')));
         $this->assertEquals(2, $DB->count_records('role_assignments', array('component' => 'enrol_databasegroup')));
         $this->assertIsEnrolled(1, 1, ENROL_USER_ACTIVE, 'student');
         $this->assertIsEnrolled(1, 2, ENROL_USER_ACTIVE, 'teacher');
-         * 
-         */
+                
         
      }
      
