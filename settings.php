@@ -51,8 +51,6 @@ if ($ADMIN->fulltree) {
 
     $settings->add(new admin_setting_configcheckbox('enrol_databasegroup/debugdb', get_string('debugdb', 'enrol_databasegroup'), get_string('debugdb_desc', 'enrol_databasegroup'), 0));
 
-
-
     $settings->add(new admin_setting_heading('enrol_databasegroup_localheader', get_string('settingsheaderlocal', 'enrol_databasegroup'), ''));
 
     $options = array('id'=>'id', 'idnumber'=>'idnumber', 'shortname'=>'shortname');
@@ -67,6 +65,8 @@ if ($ADMIN->fulltree) {
     $options = array('id'=>'id', 'idnumber'=>'idnumber');
     $settings->add(new admin_setting_configselect('enrol_databasegroup/localcategoryfield', get_string('localcategoryfield', 'enrol_databasegroup'), '', 'id', $options));
 
+    $options = array('id'=>'id', 'idnumber'=>'idnumber');
+    $settings->add(new admin_setting_configselect('enrol_databasegroup/localgroupfield', get_string('localgroupfield', 'enrol_databasegroup'), '', 'id', $options));
 
     $settings->add(new admin_setting_heading('enrol_databasegroup_remoteheader', get_string('settingsheaderremote', 'enrol_databasegroup'), ''));
 
@@ -77,6 +77,8 @@ if ($ADMIN->fulltree) {
     $settings->add(new admin_setting_configtext('enrol_databasegroup/remoteuserfield', get_string('remoteuserfield', 'enrol_databasegroup'), get_string('remoteuserfield_desc', 'enrol_databasegroup'), ''));
 
     $settings->add(new admin_setting_configtext('enrol_databasegroup/remoterolefield', get_string('remoterolefield', 'enrol_databasegroup'), get_string('remoterolefield_desc', 'enrol_databasegroup'), ''));
+
+    $settings->add(new admin_setting_configtext('enrol_databasegroup/remotegroupfield', get_string('remotegroupfield', 'enrol_databasegroup'), get_string('remotegroupfield_desc', 'enrol_databasegroup'), ''));
 
     $otheruserfieldlabel = get_string('remoteotheruserfield', 'enrol_databasegroup');
     $otheruserfielddesc  = get_string('remoteotheruserfield_desc', 'enrol_databasegroup');
