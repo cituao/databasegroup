@@ -496,7 +496,7 @@ JOIN mdl_enrol e ON (e.courseid = c.id AND e.enrol = 'databasegroup')*/
 
             $ignorehidden = $this->get_config('ignorehiddencourses');
         }
-
+    
         // Sync user enrolments.
         $sqlfields = array($userfield);
         if ($rolefield) {
@@ -506,7 +506,7 @@ JOIN mdl_enrol e ON (e.courseid = c.id AND e.enrol = 'databasegroup')*/
             $sqlfields[] = $otheruserfield;
         }
         
-        //existing tiene los cursos que se deben matricular
+        //existing tiene los cursos nuevos que se deben matricular
         foreach ($existing as $course) {
             if ($ignorehidden and !$course->visible) {
                 continue;

@@ -26,10 +26,14 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+global $CFG;
+require_once($CFG->dirroot . '/group/lib.php');
+
 class enrol_databasegroup_testcase extends advanced_testcase {
     protected static $courses = array();
     protected static $users = array();
     protected static $roles = array();
+    protected static $groups = array();
     
     /** @var string Original error log */
     protected $oldlog;
@@ -117,6 +121,7 @@ class enrol_databasegroup_testcase extends advanced_testcase {
         $table->add_field('courseid', XMLDB_TYPE_CHAR, '255', null, null, null);
         $table->add_field('userid', XMLDB_TYPE_CHAR, '255', null, null, null);
         $table->add_field('roleid', XMLDB_TYPE_CHAR, '255', null, null, null);
+        $table->add_field('groupid', XMLDB_TYPE_CHAR, '255', null, null, null);
         $table->add_field('otheruser', XMLDB_TYPE_CHAR, '1', null, XMLDB_NOTNULL, null, '0');
         $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
         if ($dbman->table_exists($table)) {
@@ -127,7 +132,9 @@ class enrol_databasegroup_testcase extends advanced_testcase {
         set_config('remotecoursefield', 'courseid', 'enrol_databasegroup');
         set_config('remoteuserfield', 'userid', 'enrol_databasegroup');
         set_config('remoterolefield', 'roleid', 'enrol_databasegroup');
+        set_config('remotegroupfield', 'groupid', 'enrol_databasegroup');
         set_config('remoteotheruserfield', 'otheruser', 'enrol_databasegroup');
+        
 
         $table = new xmldb_table('enrol_dbgroup_test_courses');
         $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
@@ -146,7 +153,7 @@ class enrol_databasegroup_testcase extends advanced_testcase {
         set_config('newcourseidnumber', 'idnumber', 'enrol_databasegroup');
         set_config('newcoursecategory', 'category', 'enrol_databasegroup');
 
-        // Create some test users and courses.
+        // Create some test users, courses and groups.
         for ($i = 1; $i <= 4; $i++) {
             self::$courses[$i] = $this->getDataGenerator()->create_course(array('fullname' => 'Test course '.$i, 'shortname' => 'tc'.$i, 'idnumber' => 'courseid'.$i));
         }
@@ -154,7 +161,21 @@ class enrol_databasegroup_testcase extends advanced_testcase {
         for ($i = 1; $i <= 10; $i++) {
             self::$users[$i] = $this->getDataGenerator()->create_user(array('username' => 'username'.$i, 'idnumber' => 'userid'.$i, 'email' => 'user'.$i.'@example.com'));
         }
+        
+        for ($i = 1; $i <= 4; $i++) {
+            self::$groups[$i] = $this->getDataGenerator()->create_group(array('courseid' => self::$courses[$i]->id));
+        }
 
+        //$this->getDataGenerator()->enrol_user(self::$users[1]->id, self::$courses[1]->id);
+        //$this->getDataGenerator()->create_group_member(array('userid' => self::$users[1]->id, 'groupid' => self::$groups[1]->id));
+        
+        $component = "enrol_databasegroup";
+        $itemid = 0;
+        $this->getDataGenerator()->create_group_member(array('userid' => self::$users[1]->id, 'groupid' => self::$groups[1]->id, 'component' => $component, 'itemid' => $itemid));
+
+        
+        //groups_add_member(self::$groups[1]->id, self::$users[1]->id, 'databasegroup', '123' );
+        
         foreach (get_all_roles() as $role) {
             self::$roles[$role->shortname] = $role;
         }
@@ -227,20 +248,24 @@ class enrol_databasegroup_testcase extends advanced_testcase {
         $plugin->set_config('localcoursefield', 'idnumber');
         $plugin->set_config('localuserfield', 'idnumber');
         $plugin->set_config('localrolefield', 'shortname');
-
+        $plugin->set_config('localgroupfield', 'idnumber');
+        
         $plugin->set_config('defaultrole', self::$roles['student']->id);
 
-        $DB->insert_record('enrol_dbgroup_test_enrols', array('userid' => 'userid1', 'courseid' => 'courseid1', 'roleid' => 'student'));
-        $DB->insert_record('enrol_dbgroup_test_enrols', array('userid' => 'userid1', 'courseid' => 'courseid2', 'roleid' => 'teacher'));
-        $DB->insert_record('enrol_dbgroup_test_enrols', array('userid' => 'userid2', 'courseid' => 'courseid1', 'roleid' => null));
-        $DB->insert_record('enrol_dbgroup_test_enrols', array('userid' => 'userid4', 'courseid' => 'courseid4', 'roleid' => 'editingteacher', 'otheruser' => '1'));
-        $DB->insert_record('enrol_dbgroup_test_enrols', array('userid' => 'xxxxxxx', 'courseid' => 'courseid1', 'roleid' => 'student')); // Bogus record to be ignored.
-        $DB->insert_record('enrol_dbgroup_test_enrols', array('userid' => 'userid1', 'courseid' => 'xxxxxxxxx', 'roleid' => 'student')); // Bogus record to be ignored.
+        
+        $DB->insert_record('enrol_dbgroup_test_enrols', array('userid' => 'userid1', 'courseid' => 'courseid1', 'roleid' => 'student', 'groupid' => 'group1'));
+        $DB->insert_record('enrol_dbgroup_test_enrols', array('userid' => 'userid1', 'courseid' => 'courseid2', 'roleid' => 'teacher' , 'groupid' => 'group1'));
+        $DB->insert_record('enrol_dbgroup_test_enrols', array('userid' => 'userid2', 'courseid' => 'courseid1', 'roleid' => null , 'groupid' => 'group1'));
+        $DB->insert_record('enrol_dbgroup_test_enrols', array('userid' => 'userid4', 'courseid' => 'courseid4', 'roleid' => 'editingteacher' , 'groupid' => 'group1', 'otheruser' => '1'));
+        $DB->insert_record('enrol_dbgroup_test_enrols', array('userid' => 'xxxxxxx', 'courseid' => 'courseid1', 'roleid' => 'student', 'groupid' => 'group1')); // Bogus record to be ignored.
+        $DB->insert_record('enrol_dbgroup_test_enrols', array('userid' => 'userid1', 'courseid' => 'xxxxxxxxx', 'roleid' => 'student', 'groupid' => 'group1')); // Bogus record to be ignored.
 
+        
         $this->assertEquals(0, $DB->count_records('user_enrolments', array()));
         $this->assertEquals(0, $DB->count_records('enrol', array('enrol' => 'databasegroup')));
         $this->assertEquals(0, $DB->count_records('role_assignments', array('component' => 'enrol_databasegroup')));
         
+        /*
         $plugin->sync_user_enrolments(self::$users[1]);
         $this->assertEquals(2, $DB->count_records('user_enrolments', array()));
         $this->assertEquals(2, $DB->count_records('enrol', array('enrol' => 'databasegroup')));
@@ -391,6 +416,8 @@ class enrol_databasegroup_testcase extends advanced_testcase {
         $this->assertEquals(2, $DB->count_records('role_assignments', array('component' => 'enrol_databasegroup')));
         $this->assertIsEnrolled(1, 1, ENROL_USER_ACTIVE, 'student');
         $this->assertIsEnrolled(1, 2, ENROL_USER_ACTIVE, 'teacher');
+         * 
+         */
         
      }
       
@@ -399,6 +426,7 @@ class enrol_databasegroup_testcase extends advanced_testcase {
     /**
      * @depends test_sync_user_enrolments
      */
+     /*
     public function test_sync_users() {
         global $DB;
 
@@ -663,6 +691,7 @@ class enrol_databasegroup_testcase extends advanced_testcase {
         $this->assertEquals(3, $DB->count_records('enrol', array('enrol' => 'databasegroup')));
         $this->assertEquals(0, $DB->count_records('role_assignments', array('component' => 'enrol_databasegroup')));
         
-     }
      
+     }
+     */
  }
