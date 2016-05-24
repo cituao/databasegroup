@@ -26,6 +26,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+require_once($CFG->dirroot . '/group/lib.php');
+
 /**
  * Databasegroup enrolment plugin implementation.
  * @author  Jesus Marquez - based on code by Martin Dougiamas, Martin Langhoff and others
@@ -122,17 +124,19 @@ class enrol_databasegroup_plugin extends enrol_plugin {
         $userfield        = trim($this->get_config('remoteuserfield'));
         $rolefield        = trim($this->get_config('remoterolefield'));
         $otheruserfield   = trim($this->get_config('remoteotheruserfield'));
+        $groupfield       = trim($this->get_config('remotegroupfield'));
 
         // Lowercased versions - necessary because we normalise the resultset with array_change_key_case().
         $coursefield_l    = strtolower($coursefield);
         $userfield_l      = strtolower($userfield);
         $rolefield_l      = strtolower($rolefield);
         $otheruserfieldlower = strtolower($otheruserfield);
+        $groupfield_l       = strtolower($groupfield);
 
         $localrolefield   = $this->get_config('localrolefield');
         $localuserfield   = $this->get_config('localuserfield');
         $localcoursefield = $this->get_config('localcoursefield');
-
+        $localgroupfield  = $this->get_config('localgroupfield');
         $unenrolaction    = $this->get_config('unenrolaction');
         $defaultrole      = $this->get_config('defaultrole');
 
@@ -160,6 +164,7 @@ class enrol_databasegroup_plugin extends enrol_plugin {
         $roleassigns = array();
         $enrols = array();
         $instances = array();
+        $groups = array();
 
         if (!$extdb = $this->db_init()) {
             // Can not connect to databasegroup, sorry.
@@ -185,7 +190,7 @@ class enrol_databasegroup_plugin extends enrol_plugin {
                     if (!$course->visible and $ignorehidden) {
                         continue;
                     }
-
+                    
                     if (empty($fields[$rolefield_l]) or !isset($roles[$fields[$rolefield_l]])) {
                         if (!$defaultrole) {
                             // Role is mandatory.
@@ -199,6 +204,7 @@ class enrol_databasegroup_plugin extends enrol_plugin {
                     $roleassigns[$course->id][$roleid] = $roleid;
                     if (empty($fields[$otheruserfieldlower])) {
                         $enrols[$course->id][$roleid] = $roleid;
+                        $groups[$course->id] = $fields[$groupfield_l];
                     }
                     //if exists enrolment then to skip
                     if ($instance = $DB->get_record('enrol', array('courseid'=>$course->id, 'enrol'=>'databasegroup'), '*', IGNORE_MULTIPLE)) {
@@ -236,6 +242,19 @@ class enrol_databasegroup_plugin extends enrol_plugin {
                 } else {
                     $roleid = reset($enrols[$courseid]);
                     $this->enrol_user($instance, $user->id, $roleid, 0, 0, ENROL_USER_ACTIVE);
+                    //groups code
+                    if (!$group = $DB->get_record('groups', array('courseid' => $courseid, $localgroupfield => $groups[$courseid]))){
+                        $data = new stdclass();
+                        $data->courseid = $courseid;
+                        $data->idnumber = $groups[$courseid];
+                        $data->name = $groups[$courseid];
+                        
+                        $groupid = groups_create_group($data, $editform = false, $editoroptions = false);
+                    }else {
+                        $group = groups_get_group_by_idnumber($courseid, $groups[$courseid]);
+                        $groupid = $group->id;
+                    }
+                    $r = groups_add_member($groupid, $user->id, 'enrol_databasegroup',0);
                 }
             }
 
@@ -246,6 +265,7 @@ class enrol_databasegroup_plugin extends enrol_plugin {
             $current = $DB->get_records('role_assignments', array('contextid'=>$context->id, 'userid'=>$user->id, 'component'=>'enrol_databasegroup', 'itemid'=>$instance->id), '', 'id, roleid');
 
             $existing = array();
+            // if course role currents  is not present in remote unassign
             foreach ($current as $r) {
                 if (isset($roles[$r->roleid])) {
                     $existing[$r->roleid] = $r->roleid;
@@ -253,6 +273,7 @@ class enrol_databasegroup_plugin extends enrol_plugin {
                     role_unassign($r->roleid, $user->id, $context->id, 'enrol_databasegroup', $instance->id);
                 }
             }
+            //if remote role is not present in existing 
             foreach ($roles as $rid) {
                 if (!isset($existing[$rid])) {
                     role_assign($rid, $user->id, $context->id, 'enrol_databasegroup', $instance->id);
