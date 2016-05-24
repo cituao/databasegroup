@@ -268,12 +268,13 @@ class enrol_databasegroup_plugin extends enrol_plugin {
             // if course role currents  is not present in remote unassign
             foreach ($current as $r) {
                 if (isset($roles[$r->roleid])) {
+                    //this current role it is present in external database 
                     $existing[$r->roleid] = $r->roleid;
                 } else {
                     role_unassign($r->roleid, $user->id, $context->id, 'enrol_databasegroup', $instance->id);
                 }
             }
-            //if remote role is not present in existing 
+            //if remote role is not present in existing, assign role
             foreach ($roles as $rid) {
                 if (!isset($existing[$rid])) {
                     role_assign($rid, $user->id, $context->id, 'enrol_databasegroup', $instance->id);

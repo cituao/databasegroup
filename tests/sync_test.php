@@ -276,7 +276,6 @@ class enrol_databasegroup_testcase extends advanced_testcase {
         $this->assertEquals(true, groups_is_member($group->id, self::$users[1]->id));
 
         // Make sure there are no errors or changes on the next login.
-
         $plugin->sync_user_enrolments(self::$users[1]);
         $this->assertEquals(2, $DB->count_records('user_enrolments', array()));
         $this->assertEquals(2, $DB->count_records('enrol', array('enrol' => 'databasegroup')));
@@ -303,8 +302,7 @@ class enrol_databasegroup_testcase extends advanced_testcase {
         $group = groups_get_group_by_idnumber(self::$courses[1]->id, 'group1');
         $this->assertEquals(true, groups_is_member($group->id, self::$users[1]->id));
         $this->assertEquals(true, groups_is_member($group->id, self::$users[2]->id));
-        
-        
+        //user # 4
         $plugin->sync_user_enrolments(self::$users[4]);
         $this->assertEquals(3, $DB->count_records('user_enrolments', array()));
         $this->assertEquals(3, $DB->count_records('enrol', array('enrol' => 'databasegroup')));
@@ -318,9 +316,8 @@ class enrol_databasegroup_testcase extends advanced_testcase {
         $this->assertEquals(2, $DB->count_records('groups', array('idnumber' => 'group1')));
         $group = groups_get_group_by_idnumber(self::$courses[4]->id, 'group1');
         $this->assertEquals(false, $group);
-        /*
+        
         // Enrolment removals.
-
         $DB->delete_records('enrol_dbgroup_test_enrols', array('userid' => 'userid1', 'courseid' => 'courseid1', 'roleid' => 'student'));
         $plugin->set_config('unenrolaction', ENROL_EXT_REMOVED_KEEP);
         $plugin->sync_user_enrolments(self::$users[1]);
@@ -329,7 +326,12 @@ class enrol_databasegroup_testcase extends advanced_testcase {
         $this->assertEquals(4, $DB->count_records('role_assignments', array('component' => 'enrol_databasegroup')));
         $this->assertIsEnrolled(1, 1, ENROL_USER_ACTIVE, 'student');
         $this->assertIsEnrolled(1, 2, ENROL_USER_ACTIVE, 'teacher'); 
-         
+        //test groups
+        $group = groups_get_group_by_idnumber(self::$courses[1]->id, 'group1');
+        $this->assertEquals(true, groups_is_member($group->id, self::$users[1]->id));
+        $group = groups_get_group_by_idnumber(self::$courses[2]->id, 'group1');
+        $this->assertEquals(true, groups_is_member($group->id, self::$users[1]->id));
+   
         $plugin->set_config('unenrolaction', ENROL_EXT_REMOVED_SUSPEND);
         $plugin->sync_user_enrolments(self::$users[1]);
         $this->assertEquals(3, $DB->count_records('user_enrolments', array()));
@@ -337,6 +339,11 @@ class enrol_databasegroup_testcase extends advanced_testcase {
         $this->assertEquals(4, $DB->count_records('role_assignments', array('component' => 'enrol_databasegroup')));
         $this->assertIsEnrolled(1, 1, ENROL_USER_SUSPENDED, 'student');
         $this->assertIsEnrolled(1, 2, ENROL_USER_ACTIVE, 'teacher');
+        //test groups
+        $group = groups_get_group_by_idnumber(self::$courses[1]->id, 'group1');
+        $this->assertEquals(true, groups_is_member($group->id, self::$users[1]->id));
+        $group = groups_get_group_by_idnumber(self::$courses[2]->id, 'group1');
+        $this->assertEquals(true, groups_is_member($group->id, self::$users[1]->id));
         
         $DB->insert_record('enrol_dbgroup_test_enrols', array('userid' => 'userid1', 'courseid' => 'courseid1', 'roleid' => 'student'));
         $plugin->sync_user_enrolments(self::$users[1]);
@@ -345,6 +352,11 @@ class enrol_databasegroup_testcase extends advanced_testcase {
         $this->assertEquals(4, $DB->count_records('role_assignments', array('component' => 'enrol_databasegroup')));
         $this->assertIsEnrolled(1, 1, ENROL_USER_ACTIVE, 'student');
         $this->assertIsEnrolled(1, 2, ENROL_USER_ACTIVE, 'teacher');
+        //test groups
+        $group = groups_get_group_by_idnumber(self::$courses[1]->id, 'group1');
+        $this->assertEquals(true, groups_is_member($group->id, self::$users[1]->id));
+        $group = groups_get_group_by_idnumber(self::$courses[2]->id, 'group1');
+        $this->assertEquals(true, groups_is_member($group->id, self::$users[1]->id));
         
         $DB->delete_records('enrol_dbgroup_test_enrols', array('userid' => 'userid1', 'courseid' => 'courseid1', 'roleid' => 'student'));
         $plugin->set_config('unenrolaction', ENROL_EXT_REMOVED_SUSPENDNOROLES);
@@ -354,6 +366,11 @@ class enrol_databasegroup_testcase extends advanced_testcase {
         $this->assertEquals(3, $DB->count_records('role_assignments', array('component' => 'enrol_databasegroup')));
         $this->assertIsEnrolled(1, 1, ENROL_USER_SUSPENDED, false);
         $this->assertIsEnrolled(1, 2, ENROL_USER_ACTIVE, 'teacher');
+        //test groups
+        $group = groups_get_group_by_idnumber(self::$courses[1]->id, 'group1');
+        $this->assertEquals(true, groups_is_member($group->id, self::$users[1]->id));
+        $group = groups_get_group_by_idnumber(self::$courses[2]->id, 'group1');
+        $this->assertEquals(true, groups_is_member($group->id, self::$users[1]->id));
         
         $DB->insert_record('enrol_dbgroup_test_enrols', array('userid' => 'userid1', 'courseid' => 'courseid1', 'roleid' => 'student'));
         $plugin->sync_user_enrolments(self::$users[1]);
@@ -362,6 +379,11 @@ class enrol_databasegroup_testcase extends advanced_testcase {
         $this->assertEquals(4, $DB->count_records('role_assignments', array('component' => 'enrol_databasegroup')));
         $this->assertIsEnrolled(1, 1, ENROL_USER_ACTIVE, 'student');
         $this->assertIsEnrolled(1, 2, ENROL_USER_ACTIVE, 'teacher');
+        //test groups
+        $group = groups_get_group_by_idnumber(self::$courses[1]->id, 'group1');
+        $this->assertEquals(true, groups_is_member($group->id, self::$users[1]->id));
+        $group = groups_get_group_by_idnumber(self::$courses[2]->id, 'group1');
+        $this->assertEquals(true, groups_is_member($group->id, self::$users[1]->id));
         
         $DB->delete_records('enrol_dbgroup_test_enrols', array('userid' => 'userid1', 'courseid' => 'courseid1', 'roleid' => 'student'));
         $plugin->set_config('unenrolaction', ENROL_EXT_REMOVED_UNENROL);
@@ -371,6 +393,11 @@ class enrol_databasegroup_testcase extends advanced_testcase {
         $this->assertEquals(3, $DB->count_records('role_assignments', array('component' => 'enrol_databasegroup')));
         $this->assertIsNotEnrolled(1, 1);
         $this->assertIsEnrolled(1, 2, ENROL_USER_ACTIVE, 'teacher');
+        //test groups
+        $group = groups_get_group_by_idnumber(self::$courses[1]->id, 'group1');
+        $this->assertEquals(false, groups_is_member($group->id, self::$users[1]->id));
+        $group = groups_get_group_by_idnumber(self::$courses[2]->id, 'group1');
+        $this->assertEquals(true, groups_is_member($group->id, self::$users[1]->id));
         
         $DB->delete_records('enrol_dbgroup_test_enrols', array('userid' => 'userid4', 'courseid' => 'courseid4', 'roleid' => 'editingteacher'));
         $plugin->set_config('unenrolaction', ENROL_EXT_REMOVED_SUSPENDNOROLES);
@@ -380,7 +407,12 @@ class enrol_databasegroup_testcase extends advanced_testcase {
         $this->assertEquals(2, $DB->count_records('role_assignments', array('component' => 'enrol_databasegroup')));
         $this->assertIsNotEnrolled(4, 4);
         $this->assertHasRoleAssignment(4, 4, false);
-
+        //check groups this user not enroll
+        $this->assertEquals(2, $DB->count_records('groups', array('idnumber' => 'group1')));
+        $group = groups_get_group_by_idnumber(self::$courses[4]->id, 'group1');
+        $this->assertEquals(false, $group);
+        
+        /*
         $this->reset_enrol_database();
 
         $this->assertEquals(0, $DB->count_records('user_enrolments', array()));
